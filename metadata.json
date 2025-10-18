@@ -1,0 +1,7 @@
+{
+  "name": "EduVators: AI Remote Classroom",
+  "description": "EduVators is an AI-powered remote classroom platform designed to make learning accessible for rural students through multilingual education, offline support, and intelligent mentorship.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
