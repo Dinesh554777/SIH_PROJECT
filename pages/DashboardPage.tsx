@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bot, FileText, Mic, BarChart4, User, Send, Upload, Languages, Bookmark, X, Search, Trash2, Eye, Hourglass, HelpCircle, FilePlus } from 'lucide-react';
+import { Bot, FileText, Mic, BarChart4, User, Send, Upload, Languages, Bookmark, X, Search, Trash2, Eye, Hourglass, HelpCircle, FilePlus, Trophy, History } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 import AITutor from '../components/AITutor';
 import Modal from '../components/Modal';
 import Card from '../components/Card';
 import { getSummary, getNotesFromAudio, translateText } from '../services/geminiService';
-import { SAVED_NOTES_DATA, TIME_SPENT_DATA, TOOL_USAGE_DATA } from '../constants';
+import { SAVED_NOTES_DATA, TIME_SPENT_DATA, TOOL_USAGE_DATA, BADGES_DATA } from '../constants';
 import type { SavedNote } from '../types';
 
 type Tool = 'tutor' | 'notes' | 'summarizer' | 'translator' | 'history' | 'analytics';
@@ -75,18 +75,142 @@ const SavedNotesTool: React.FC = () => {
     const [notes, setNotes] = useState<SavedNote[]>(SAVED_NOTES_DATA);
     const [selectedNote, setSelectedNote] = useState<SavedNote | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const filteredNotes = notes.filter(n => n.title.toLowerCase().includes(searchTerm.toLowerCase()));
+    const [searchHistory, setSearchHistory] = useState<string[]>([
+        'neural networks',
+        'python',
+        'thermodynamics basics',
+    ]);
+    const lastCommittedSearchRef = useRef('');
+
+    const filteredNotes = notes.filter(n => 
+        n.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        n.contentSnippet.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(e.target.value);
+    };
+
+    const commitSearch = () => {
+        const term = searchTerm.trim();
+        if (term && term !== lastCommittedSearchRef.current) {
+            setSearchHistory(prev => 
+                [term, ...prev.filter(t => t.toLowerCase() !== term.toLowerCase())].slice(0, 5) // Keep last 5 unique searches
+            );
+            lastCommittedSearchRef.current = term;
+        }
+    };
+
+    const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            commitSearch();
+            e.preventDefault();
+        }
+    };
+
+    const handleSearchBlur = () => {
+        commitSearch();
+    };
+    
+    const rerunSearch = (term: string) => {
+        setSearchTerm(term);
+        lastCommittedSearchRef.current = term;
+    };
+
+    const deleteHistoryItem = (termToDelete: string) => {
+        setSearchHistory(prev => prev.filter(term => term !== termToDelete));
+    };
+
     const deleteNote = (id: number) => setNotes(notes.filter(n => n.id !== id));
-    return (<ToolWrapper title="Saved Notes & History"><div className="space-y-6"><div className="relative"><Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" /><input type="text" placeholder="Search notes..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} className="w-full pl-12 pr-4 py-3 border rounded-full focus:outline-none focus:ring-2 focus:ring-accent bg-white/10 border-white/20 placeholder:text-text-secondary text-text-primary" /></div><div className="grid md:grid-cols-2 gap-6">{filteredNotes.map(note => (<Card key={note.id} className="!p-0 flex flex-col"><div className="p-4 flex-grow"><span className={`text-xs font-bold px-2 py-1 rounded-full ${note.category === 'Notes' ? 'bg-blue-500/20 text-blue-300' : note.category === 'Summary' ? 'bg-green-500/20 text-green-300' : 'bg-yellow-500/20 text-yellow-300'}`}>{note.category}</span><h4 className="font-bold text-lg text-text-primary mt-2">{note.title}</h4><p className="text-sm text-text-secondary mt-1">{note.contentSnippet}</p></div><div className="bg-white/5 px-4 py-3 rounded-b-2xl border-t border-white/10 flex justify-between items-center"><p className="text-xs text-text-secondary">{note.date}</p><div className="flex gap-2"><button onClick={() => setSelectedNote(note)} className="p-2 text-text-secondary hover:text-accent"><Eye size={16}/></button><button onClick={() => deleteNote(note.id)} className="p-2 text-text-secondary hover:text-red-400"><Trash2 size={16}/></button></div></div></Card>))}</div></div><Modal isOpen={!!selectedNote} onClose={()=>setSelectedNote(null)} title={selectedNote?.title || ''}><div className="prose prose-invert max-w-none text-text-secondary whitespace-pre-wrap">{selectedNote?.fullContent}</div></Modal></ToolWrapper>);
+    
+    return (<ToolWrapper title="Saved Notes & History">
+        <div className="space-y-6">
+            <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" />
+                <input 
+                    type="text" 
+                    placeholder="Search notes by title or content..." 
+                    value={searchTerm} 
+                    onChange={handleSearchChange}
+                    onKeyDown={handleSearchKeyDown}
+                    onBlur={handleSearchBlur}
+                    className="w-full pl-12 pr-4 py-3 border rounded-full focus:outline-none focus:ring-2 focus:ring-accent bg-white/10 border-white/20 placeholder:text-text-secondary text-text-primary" 
+                />
+            </div>
+            <div className="grid md:grid-cols-2 gap-6 min-h-[300px]">
+                {filteredNotes.length > 0 ? filteredNotes.map(note => (
+                    <Card key={note.id} className="!p-0 flex flex-col">
+                        <div className="p-4 flex-grow">
+                            <span className={`text-xs font-bold px-2 py-1 rounded-full ${note.category === 'Notes' ? 'bg-blue-500/20 text-blue-300' : note.category === 'Summary' ? 'bg-green-500/20 text-green-300' : 'bg-yellow-500/20 text-yellow-300'}`}>{note.category}</span>
+                            <h4 className="font-bold text-lg text-text-primary mt-2">{note.title}</h4>
+                            <p className="text-sm text-text-secondary mt-1">{note.contentSnippet}</p>
+                        </div>
+                        <div className="bg-white/5 px-4 py-3 rounded-b-2xl border-t border-white/10 flex justify-between items-center">
+                            <p className="text-xs text-text-secondary">{note.date}</p>
+                            <div className="flex gap-2">
+                                <button onClick={() => setSelectedNote(note)} className="p-2 text-text-secondary hover:text-accent"><Eye size={16}/></button>
+                                <button onClick={() => deleteNote(note.id)} className="p-2 text-text-secondary hover:text-red-400"><Trash2 size={16}/></button>
+                            </div>
+                        </div>
+                    </Card>
+                )) : (
+                    <div className="col-span-2 text-center py-10 text-text-secondary">
+                        <p>No notes found{searchTerm ? ` for "${searchTerm}"` : ''}.</p>
+                    </div>
+                )}
+            </div>
+
+            <div className="mt-8 pt-6 border-t border-white/10">
+                <h4 className="font-semibold text-text-primary mb-4 flex items-center gap-2">
+                    <History size={20} />
+                    Search History
+                </h4>
+                {searchHistory.length > 0 ? (
+                    <ul className="space-y-2">
+                        {searchHistory.map((term, index) => (
+                            <li key={index} className="flex items-center justify-between p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors group">
+                                <button onClick={() => rerunSearch(term)} className="text-text-secondary hover:text-accent text-left flex-grow truncate pr-2">
+                                    {term}
+                                </button>
+                                <button onClick={() => deleteHistoryItem(term)} className="p-1 text-text-secondary opacity-0 group-hover:opacity-100 hover:text-red-400 transition-opacity flex-shrink-0">
+                                    <Trash2 size={16} />
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p className="text-text-secondary text-sm">Your recent searches will appear here.</p>
+                )}
+            </div>
+        </div>
+        <Modal isOpen={!!selectedNote} onClose={()=>setSelectedNote(null)} title={selectedNote?.title || ''}>
+            <div className="prose prose-invert max-w-none text-text-secondary whitespace-pre-wrap">{selectedNote?.fullContent}</div>
+        </Modal>
+    </ToolWrapper>);
 };
 
 const AnalyticsTool: React.FC = () => {
     const COLORS = ['#2563EB', '#22D3EE', '#22C55E', '#F59E0B'];
-    return (<ToolWrapper title="Learning Analytics"><div className="space-y-8"><div className="grid md:grid-cols-3 gap-6 text-center">
+    return (<ToolWrapper title="Learning Analytics"><div className="space-y-8"><div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-center">
+        <Card><Trophy className="h-8 w-8 text-amber-400 mx-auto mb-2"/><p className="text-2xl font-bold font-heading text-text-primary">1250</p><p className="text-text-secondary">My Points</p></Card>
         <Card><Hourglass className="h-8 w-8 text-accent mx-auto mb-2"/><p className="text-2xl font-bold font-heading text-text-primary">48 Hours</p><p className="text-text-secondary">Total Study Time</p></Card>
         <Card><HelpCircle className="h-8 w-8 text-accent mx-auto mb-2"/><p className="text-2xl font-bold font-heading text-text-primary">124</p><p className="text-text-secondary">AI Questions Asked</p></Card>
         <Card><FilePlus className="h-8 w-8 text-accent mx-auto mb-2"/><p className="text-2xl font-bold font-heading text-text-primary">32</p><p className="text-text-secondary">Notes Generated</p></Card>
-    </div><div className="grid lg:grid-cols-2 gap-8 h-80"><Card><h4 className="font-semibold text-text-primary mb-4 text-center">Time Spent per Subject (Hours)</h4><ResponsiveContainer width="100%" height="90%"><BarChart data={TIME_SPENT_DATA} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}><CartesianGrid stroke="rgba(255, 255, 255, 0.1)" /><XAxis dataKey="subject" stroke="#94A3B8" fontSize={12} /><YAxis stroke="#94A3B8"/><Tooltip contentStyle={{ backgroundColor: '#0F172A', border: '1px solid rgba(255,255,255,0.1)' }} cursor={{fill: 'rgba(37, 99, 235, 0.1)'}}/><Bar dataKey="hours" fill="#2563EB" /></BarChart></ResponsiveContainer></Card><Card><h4 className="font-semibold text-text-primary mb-4 text-center">Tool Usage</h4><ResponsiveContainer width="100%" height="90%"><PieChart><Tooltip contentStyle={{ backgroundColor: '#0F172A', border: '1px solid rgba(255,255,255,0.1)' }}/><Legend wrapperStyle={{color: '#F8FAFC', fontSize: '14px'}}/><Pie data={TOOL_USAGE_DATA} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} fill="#8884d8">{TOOL_USAGE_DATA.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}</Pie></PieChart></ResponsiveContainer></Card></div></div></ToolWrapper>);
+    </div>
+    <Card>
+        <h4 className="font-semibold text-text-primary mb-4 text-center">My Badges</h4>
+        <div className="flex flex-wrap justify-center gap-x-6 gap-y-8">
+            {BADGES_DATA.map(badge => (
+              <div key={badge.id} className="text-center w-32 group cursor-pointer" title={badge.description}>
+                <div className={`mx-auto bg-slate-700/50 border-2 ${badge.color === 'gold' ? 'border-amber-400' : badge.color === 'silver' ? 'border-slate-400' : badge.color === 'bronze' ? 'border-yellow-600' : 'border-slate-600'} rounded-full h-20 w-20 flex items-center justify-center transition-all group-hover:scale-110`}>
+                  <badge.icon size={40} className={`${badge.color === 'gold' ? 'text-amber-400' : badge.color === 'silver' ? 'text-slate-400' : badge.color === 'bronze' ? 'text-yellow-600' : 'text-accent'}`} />
+                </div>
+                <p className="text-sm font-semibold mt-2 text-text-primary truncate">{badge.name}</p>
+              </div>
+            ))}
+        </div>
+    </Card>
+    <div className="grid lg:grid-cols-2 gap-8 h-80"><Card><h4 className="font-semibold text-text-primary mb-4 text-center">Time Spent per Subject (Hours)</h4><ResponsiveContainer width="100%" height="90%"><BarChart data={TIME_SPENT_DATA} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}><CartesianGrid stroke="rgba(255, 255, 255, 0.1)" /><XAxis dataKey="subject" stroke="#94A3B8" fontSize={12} /><YAxis stroke="#94A3B8"/><Tooltip contentStyle={{ backgroundColor: '#0F172A', border: '1px solid rgba(255,255,255,0.1)' }} cursor={{fill: 'rgba(37, 99, 235, 0.1)'}}/><Bar dataKey="hours" fill="#2563EB" /></BarChart></ResponsiveContainer></Card><Card><h4 className="font-semibold text-text-primary mb-4 text-center">Tool Usage</h4><ResponsiveContainer width="100%" height="90%"><PieChart><Tooltip contentStyle={{ backgroundColor: '#0F172A', border: '1px solid rgba(255,255,255,0.1)' }}/><Legend wrapperStyle={{color: '#F8FAFC', fontSize: '14px'}}/><Pie data={TOOL_USAGE_DATA} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} fill="#8884d8">{TOOL_USAGE_DATA.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}</Pie></PieChart></ResponsiveContainer></Card></div></div></ToolWrapper>);
 }
 
 const DashboardPage: React.FC = () => {

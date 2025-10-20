@@ -62,19 +62,28 @@ const AboutPage: React.FC = () => {
       {/* Team Section */}
       <section>
         <h2 className="text-3xl font-bold font-heading text-center text-text-primary mb-12">Meet the Team</h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {TEAM_MEMBERS.map((member) => (
-            <Card key={member.name} className="text-center">
-              <img
-                src={member.imageUrl}
-                alt={member.name}
-                className="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4 border-white/10"
-              />
-              <h3 className="text-xl font-semibold font-heading text-text-primary">{member.name}</h3>
-              <p className="text-accent font-medium mb-3">{member.role}</p>
-              <a href={member.linkedin} target="_blank" rel="noopener noreferrer" className="inline-block text-text-secondary hover:text-accent transition-colors">
-                  <Linkedin size={24}/>
-              </a>
+            <Card key={member.name} className="text-center flex flex-col">
+              <div className="flex-grow">
+                <img
+                  src={member.imageUrl}
+                  alt={member.name}
+                  className="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4 border-white/10"
+                />
+                <h3 className="text-xl font-semibold font-heading text-text-primary">{member.name}</h3>
+                <p className="text-accent font-medium mb-1">{member.role}</p>
+                {member.email && (
+                    <a href={`mailto:${member.email}`} className="text-text-secondary text-sm break-all hover:text-accent transition-colors">
+                        {member.email}
+                    </a>
+                )}
+              </div>
+              <div className="mt-4">
+                <a href={member.linkedin} target="_blank" rel="noopener noreferrer" className="inline-block text-text-secondary hover:text-accent transition-colors">
+                    <Linkedin size={24}/>
+                </a>
+              </div>
             </Card>
           ))}
         </div>

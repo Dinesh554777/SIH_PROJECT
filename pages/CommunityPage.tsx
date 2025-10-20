@@ -1,7 +1,7 @@
 import React from 'react';
 import Card from '../components/Card';
 import { COMMUNITY_POSTS, TOP_LEARNERS } from '../constants';
-import { MessageSquare, Eye, Award, Send, ThumbsUp } from 'lucide-react';
+import { MessageSquare, Eye, Trophy, Send, ThumbsUp } from 'lucide-react';
 
 const CommunityPage: React.FC = () => {
     return (
@@ -57,20 +57,33 @@ const CommunityPage: React.FC = () => {
                 {/* Sidebar */}
                 <div className="space-y-6">
                     <Card>
-                        <h3 className="text-xl font-bold font-heading text-text-primary mb-4 flex items-center gap-2"><Award className="text-accent"/> Top Learners</h3>
-                        <ul className="space-y-4">
-                            {TOP_LEARNERS.map((learner, index) => (
-                                <li key={learner.name} className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <img src={learner.imageUrl} alt={learner.name} className="w-10 h-10 rounded-full" />
-                                        <div>
-                                            <p className="font-semibold text-text-primary">{learner.name}</p>
-                                            <p className="text-sm text-text-secondary">{learner.points} points</p>
+                        <h3 className="text-xl font-bold font-heading text-text-primary mb-4 flex items-center gap-2"><Trophy className="text-amber-400"/> Leaderboard</h3>
+                        <ul className="space-y-3">
+                            {TOP_LEARNERS.map((learner, index) => {
+                                const isTopThree = index < 3;
+                                const rankStyling = [
+                                    'border-amber-400', // 1st Gold
+                                    'border-slate-400', // 2nd Silver
+                                    'border-yellow-600', // 3rd Bronze
+                                ];
+
+                                return (
+                                    <li 
+                                        key={learner.name} 
+                                        className={`flex items-center justify-between p-2 rounded-lg bg-white/5 transition-all
+                                        ${isTopThree ? `border-2 ${rankStyling[index]}` : ''}`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <span className="font-bold text-lg text-text-secondary w-6 text-center">#{index + 1}</span>
+                                            <img src={learner.imageUrl} alt={learner.name} className="w-10 h-10 rounded-full" />
+                                            <div>
+                                                <p className="font-semibold text-text-primary">{learner.name}</p>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <span className="font-bold text-lg text-accent">#{index + 1}</span>
-                                </li>
-                            ))}
+                                        <span className="font-bold text-lg text-accent">{learner.points} pts</span>
+                                    </li>
+                                );
+                            })}
                         </ul>
                     </Card>
                 </div>

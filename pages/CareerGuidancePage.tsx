@@ -51,6 +51,10 @@ const CareerGuidancePage: React.FC = () => {
                 </div>
                 <p className="text-sm text-right mt-1 text-text-secondary">60% Complete</p>
             </div>
+             <div className="mt-4 text-center bg-primary/20 p-3 rounded-lg flex items-center justify-center gap-3">
+              <BadgeCheck size={24} className="text-accent" />
+              <p className="text-text-secondary text-sm">Complete your learning path to earn the <span className="font-bold text-accent">Pathfinder Badge</span>!</p>
+            </div>
         </Card>
       </section>
       

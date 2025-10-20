@@ -13,6 +13,7 @@ export interface TeamMember {
   role: string;
   imageUrl: string;
   linkedin: string;
+  email?: string;
 }
 
 export interface CareerPath {
@@ -25,6 +26,7 @@ export interface CareerPath {
 export interface ChatMessage {
     sender: 'user' | 'ai';
     text: string;
+    source?: string;
 }
 
 export interface Testimonial {
@@ -53,6 +55,8 @@ export interface Resource {
     category: 'AI' | 'Electronics' | 'CSE' | 'Mechanical';
     fileType: 'PDF' | 'Video' | 'Notes';
     icon: LucideIcon;
+    isIndexed?: boolean;
+    fullText: string;
 }
 
 export interface CommunityPost {
@@ -104,9 +108,18 @@ export interface TimeSpentData {
     hours: number;
 }
 
+export interface Badge {
+  id: number;
+  name: string;
+  description: string;
+  icon: LucideIcon;
+  color: 'gold' | 'silver' | 'bronze' | 'default';
+}
+
+
+// Fix: Add index signature for recharts compatibility to resolve type error with PieChart component.
 export interface ToolUsageData {
     name: string;
     value: number;
-    // FIX: Add index signature to satisfy Recharts' data prop typing, which expects objects that can be indexed by a string.
-    [key: string]: string | number;
+    [key: string]: any;
 }
